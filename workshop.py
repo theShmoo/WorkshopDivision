@@ -17,7 +17,7 @@ class Workshop(object):
         self.participants = {day: [] for day in self.days}
         self.id = Workshop.ID
         Workshop.ID += 1
-        print("%s: %s" % (str(self), str(self.days)))
+        logger.info("%s: %s", self, self.days)
 
     def maxParticipants(self):
         """Get the number of participants of the workshop"""
@@ -78,11 +78,14 @@ class Workshop(object):
 
     def removeParticipant(self, day, participant):
         """Remove the participant from the given date"""
-        if self.usesDay(day) and self.participants[day] is participant:
-            self.participants[day] = None
+        if self.usesDay(day):
+            if participant in self.participants[day]:
+                self.participants[day].remove(participant)
+            else:
+                logger.warning("Can't remove %s from %s for %s (not there)",
+                               participant, day, self)
         else:
-            logger.warning("%s is not used on day %s by %s",
-                           participant, day, self)
+            logger.warning("%s does not use day %s", self, day)
 
     def hasFreeSlots(self, day):
         if self.usesDay(day):

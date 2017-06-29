@@ -38,15 +38,15 @@
     },
 
     "loggers": {
-        "workshopdevision": {
-            "level": "DEBUG",
+        "workshopdivision": {
+            "level": "WARNING",
             "handlers": ["console"],
             "propagate": "no"
         }
     },
 
     "root": {
-        "level": "DEBUG",
-        "handlers": ["console", "info_file_handler", "error_file_handler"]
+        "level": "INFO",
+        "handlers": ["info_file_handler", "error_file_handler"]
     }
 }

@@ -30,7 +30,6 @@ class Participant(object):
         sum_points = sum([p for w, p in self.points.iteritems()])
         sum_points /= float(100)
         self.points = {w: p / sum_points for w, p in self.points.iteritems()}
-        print(str(self.points))
 
     def isFullyAssigned(self):
         for d, w in self.workshops.iteritems():
