@@ -17,6 +17,7 @@ class Workshop(object):
         self.participants = {day: [] for day in self.days}
         self.id = Workshop.ID
         Workshop.ID += 1
+        print("%s: %s" % (str(self), str(self.days)))
 
     def maxParticipants(self):
         """Get the number of participants of the workshop"""
@@ -28,6 +29,20 @@ class Workshop(object):
             return max_participants
         else:
             logger.error("Workshop %s has no valid days!", self.name)
+
+    def getMinDay(self, free_days=None):
+        """returns the day with the minimum participants."""
+        if free_days is None:
+            free_days = self.days
+
+        min_part = 1000
+        for d in free_days:
+            if self.usesDay(d):
+                part = len(self.participants[d])
+                if part < min_part:
+                    min_day = d
+                    min_part = part
+        return min_day
 
     def getParticipantsOfDay(self, day):
         """Get the participants of a day"""
@@ -47,6 +62,48 @@ class Workshop(object):
                 s = s + "," + d
         return s
 
+    def assignParticipant(self, day, participant):
+        if not self.usesDay(day):
+            logger.warning("%s does not use day %s", self, day)
+            return
+        if participant in self.participants[day]:
+            logger.warning("Was not able to assign %s for %s on %s!",
+                           participant, self, day)
+        else:
+            self.participants[day].append(participant)
+            logger.debug("Assigned %s for %s on %s", participant, self, day)
+
+    def usesDay(self, day):
+        return day in self.days
+
+    def removeParticipant(self, day, participant):
+        """Remove the participant from the given date"""
+        if self.usesDay(day) and self.participants[day] is participant:
+            self.participants[day] = None
+        else:
+            logger.warning("%s is not used on day %s by %s",
+                           participant, day, self)
+
+    def hasFreeSlots(self, day):
+        if self.usesDay(day):
+            free_slots = len(self.participants[day])
+
+            isfree = free_slots < self.max_participants_per_day
+
+            if isfree:
+                logger.debug("%s has %d/%d on %s",
+                             self, free_slots, self.max_participants_per_day,
+                             day)
+            else:
+                logger.debug("%s has no free slots left (%d/%d) on %s",
+                             self, free_slots, self.max_participants_per_day,
+                             day)
+            return isfree
+        else:
+            logger.debug("%s does not use use day %s",
+                         self, day)
+            return False
+
     def __str__(self):
         # return "Workshop %s am %s von %s" % (
         #     self.name,
@@ -55,4 +112,4 @@ class Workshop(object):
         return self.name.encode('ascii', 'ignore').decode('ascii')
 
     def __repr__(self):
-        return str(self.id)
+        return self.name.encode('ascii', 'ignore').decode('ascii')
