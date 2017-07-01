@@ -107,6 +107,13 @@ class Workshop(object):
                          self, day)
             return False
 
+    def getNumParticipants(self):
+        min_num = 1000
+        for day in self.days:
+            min_num = min(min_num, len(self.participants[day]))
+
+        return min_num
+
     def __str__(self):
         # return "Workshop %s am %s von %s" % (
         #     self.name,

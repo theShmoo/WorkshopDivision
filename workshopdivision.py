@@ -147,6 +147,19 @@ class WorkshopDivision(object):
 
         return all_points
 
+    def getMaxPointsPerWorkshops(self, remaining=None):
+        if remaining is None:
+            remaining = self.participants
+
+        all_points = {w: 0.0 for w in self.workshops}
+
+        for p in remaining:
+            for w in self.workshops:
+                if p.isAvailable(w):
+                    all_points[w] = max(all_points[w], p.getPoints(w))
+
+        return all_points
+
     def getMedianPointsPerWorkshop(self, remaining=None):
         """Get all points per workshop"""
         if remaining is None:
@@ -257,11 +270,22 @@ class WorkshopDivision(object):
 
         return max_points_p
 
+    def sortWorkshopsBySinglePart(self, remaining):
+        points = self.getMaxPointsPerWorkshops(remaining)
+        sorted_workshops = sorted(points, key=points.get, reverse=True)
+        return sorted_workshops
+
     def sortWorkshopsByMaxPoints(self, remaining):
-        points = self.getMeanPointsPerWorkshop(remaining)
-        remaining = sorted(points, key=points.get, reverse=True)
+        points = self.getSumPointsPerWorkshop(remaining)
+        sorted_workshops = sorted(points, key=points.get, reverse=True)
         logger.debug('Sorted workshops by their maximum points. %s',
                      str(points))
+        return sorted_workshops
+
+    def sortWorkshopsByMinParticipants(self):
+        num_part = {w: w.getNumParticipants() for w in self.workshops}
+        sorted_workshops = sorted(num_part, key=num_part.get, reverse=False)
+        return sorted_workshops
 
     def calculateRemainingParticipants(self, remaining):
         """Throws all participants that are assigned out of the array"""
@@ -274,30 +298,32 @@ class WorkshopDivision(object):
 
     def startDivision(self):
         """Start the division of the participants to the workshops"""
-        remaining = self.participants[:]
+        remaining_part = self.participants[:]
         change = True
-        while len(remaining) > 0 and change:
+        while len(remaining_part) > 0 and change:
             # reduce the number of remaining
-            self.calculateRemainingParticipants(remaining)
-            self.sortWorkshopsByMaxPoints(remaining)
+            self.calculateRemainingParticipants(remaining_part)
+            sorted_workshops = self.sortWorkshopsByMaxPoints(remaining_part)
             change = False
-            for w in self.workshops:
-                participant = self.getParticipantWithMaxPoints(w, remaining)
+            for w in sorted_workshops:
+                participant = self.getParticipantWithMaxPoints(w,
+                                                               remaining_part)
                 if participant is not None:
                     participant.assignWorkshop(w)
                     change = True
-                    # if there was a change priotize again (break)
-                    break
 
-        if len(remaining) > 0:
-            logger.warning("Not all participants got a workshop! " +
-                           "Removing assignments of these participants")
-            for p in remaining:
+        if len(remaining_part) > 0:
+            logger.warning("Not all participants got a workshop! (%d)",
+                           len(remaining_part))
+
+            for p in remaining_part:
+                sorted_workshops = self.sortWorkshopsByMinParticipants()
                 print(str(p) + ":")
-                for d, w in p.workshops.iteritems():
-                    if w is not None:
-                        print("\t%s: %s with %.1f" %
-                              (str(d), str(w), p.getPoints(w)))
+                for workshop in sorted_workshops:
+                    if p.isAvailable(workshop):
+                        p.assignWorkshop(workshop)
+                        break
+
                 # p.clearAssignment()
             # self.startDivision()
 
@@ -311,7 +337,7 @@ class WorkshopDivision(object):
                     if w.usesDay(d):
                         participants = w.getParticipantsOfDay(d)
                         for p in participants:
-                            row = [d, w.name, p.name, p.stufe, p.trupp,
+                            row = [d, w.name, p.name, p.age, p.trupp,
                                    str(p.getPoints(w))]
                             row = [r.encode('utf-8') for r in row]
                             csv_writer.writerow(row)
@@ -325,7 +351,7 @@ class WorkshopDivision(object):
                 for d in w.days:
                     participants = w.getParticipantsOfDay(d)
                     for p in participants:
-                        row = [w.name, d, p.name, p.stufe, p.trupp,
+                        row = [w.name, d, p.name, p.age, p.trupp,
                                str(p.getPoints(w))]
                         row = [r.encode('utf-8') for r in row]
                         csv_writer.writerow(row)
@@ -338,7 +364,7 @@ class WorkshopDivision(object):
             for p in self.participants:
                 for d, w in p.workshops.iteritems():
                     if w is not None:
-                        row = [p.stufe, p.trupp, p.name,
+                        row = [p.age, p.trupp, p.name,
                                d, w.name, str(p.getPoints(w))]
                         row = [r.encode('utf-8') for r in row]
                         csv_writer.writerow(row)

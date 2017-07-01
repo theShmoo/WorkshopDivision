@@ -5,10 +5,10 @@ logger = logging.getLogger("workshopdivision")
 
 class Participant(object):
     """docstring for Participant"""
-    def __init__(self, name, stufe, trupp, points, available_dates):
+    def __init__(self, name, age, trupp, points, available_dates):
         super(Participant, self).__init__()
         self.name = name
-        self.stufe = stufe
+        self.age = age
         self.trupp = trupp
         self.points = points
         self.workshops = {date: None for date in available_dates}
@@ -43,6 +43,10 @@ class Participant(object):
     def isAvailable(self, workshop):
         """If the participant has a free slot and is not using the workshop"""
         free = False
+
+        # first check if the workshop is ok with the stufe
+        if self.age not in workshop.ages:
+            return False
 
         free_days = []
         for d in self.available_dates:
