@@ -36,6 +36,7 @@ class Workshop(object):
             free_days = self.days
 
         min_part = 1000
+        min_day = None
         for d in free_days:
             if self.usesDay(d):
                 part = len(self.participants[d])
@@ -65,10 +66,11 @@ class Workshop(object):
     def assignParticipant(self, day, participant):
         if not self.usesDay(day):
             logger.warning("%s does not use day %s", self, day)
-            return
-        if participant in self.participants[day]:
+        elif participant in self.participants[day]:
             logger.warning("Was not able to assign %s for %s on %s!",
                            participant, self, day)
+        elif not participant.isAvailable(self):
+            logger.warning("%s is not available for %s", self, participant)
         else:
             self.participants[day].append(participant)
             logger.debug("Assigned %s for %s on %s", participant, self, day)

@@ -44,22 +44,21 @@ class Participant(object):
         """If the participant has a free slot and is not using the workshop"""
         free = False
 
-        # first check if the workshop is ok with the stufe
+        # first check if the workshop is ok with the age
         if self.age not in workshop.ages:
             return False
 
-        free_days = []
         for d in self.available_dates:
-            if workshop.hasFreeSlots(d):
-                free_days.append(d)
-
-        for d in free_days:
+            # get the assigned workshop of this day (may be None!)
             w = self.workshops[d]
+
             # check if the workshop is already assigned
             if w is workshop:
                 return False
-            # if the day is still free set the participant available
-            if w is None:
+
+            # check if it is has a free slot
+            # and if the day is still set the participant available
+            if w is None and workshop.hasFreeSlots(d):
                 free = True
 
         return free
@@ -77,14 +76,16 @@ class Participant(object):
         free_days = self.getFreeDays()
         day = workshop.getMinDay(free_days)
         if day is not None:
-            self.workshops[day] = workshop
             workshop.assignParticipant(day, self)
+            self.workshops[day] = workshop
             logger.info("%s assigned for %s on %s with %.1f points",
                         self, workshop, day, self.getPoints(workshop))
         else:
             logger.warning("Was not able to assign %s for %s on %s with %.1f" +
                            "points", self, workshop, day,
                            self.getPoints(workshop))
+
+        return day
 
     def clearAssignment(self):
         """Remove the assigned workshops of the participant"""

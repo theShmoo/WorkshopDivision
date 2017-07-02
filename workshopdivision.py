@@ -308,9 +308,10 @@ class WorkshopDivision(object):
             for w in sorted_workshops:
                 participant = self.getParticipantWithMaxPoints(w,
                                                                remaining_part)
-                if participant is not None:
+                if participant is not None and participant.isAvailable(w):
                     participant.assignWorkshop(w)
                     change = True
+                    break
 
         if len(remaining_part) > 0:
             logger.warning("Not all participants got a workshop! (%d)",
@@ -318,10 +319,10 @@ class WorkshopDivision(object):
 
             for p in remaining_part:
                 sorted_workshops = self.sortWorkshopsByMinParticipants()
-                print(str(p) + ":")
                 for workshop in sorted_workshops:
                     if p.isAvailable(workshop):
-                        p.assignWorkshop(workshop)
+                        day = p.assignWorkshop(workshop)
+                        print(str(p) + " - " + day + " - " + str(workshop))
                         break
 
                 # p.clearAssignment()
